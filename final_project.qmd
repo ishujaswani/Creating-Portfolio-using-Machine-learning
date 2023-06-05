@@ -1,0 +1,582 @@
+---
+title: "Wallstreetbet's Tech Waves: Sentiment meets Stocks"
+author: "group 4"
+date: "2022-11-15"
+format:
+  html:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+embed-resources: true
+---
+# Packages used
+
+
+```{r,echo=FALSE,include=FALSE}
+rm(list = ls())
+library(alphavantager)
+library(RedditExtractoR)
+library(lubridate)
+library(dplyr)
+library(openxlsx)
+library(tidyquant)
+library(tibble)
+library(lexicon)
+library(tidytext)
+library(sentimentr)
+library(tseries)
+library(forecast)
+#install.packages("dtw")
+library(dtw)
+library(zoo)
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(stringr)
+```
+
+
+# 1 day stock data 
+
+> Created a function to extract stock-data and converted to ts
+
+```{r,echo=FALSE,include=FALSE}
+
+# AAPL, META, AMZN, IBM, MSFT, GOOGL, DELL, HPQ, UBER, ADBE
+
+get_stock_data <- function(ticker_symbol) {
+  ticker <- getSymbols(ticker_symbol, from = '2019-01-01',
+                       to = Sys.Date(), warnings = FALSE,
+                       auto.assign = FALSE, periodicity = "daily")
+  ticker_weekly <-to.weekly(ticker)
+  ticker <- ts(ticker_weekly[,4], start = c(2019, 1), frequency = 52)
+  ticker
+  
+}
+
+tickers <- c("AAPL", "META", "AMZN", "IBM", "MSFT", "GOOGL", "DELL", "UBER", "ADBE","HPQ")
+
+for (ticker in tickers) {
+  data <- get_stock_data(ticker)
+  assign(paste0(toupper(ticker)), data)
+}
+rm(data)
+
+
+```
+
+
+
+# check stationarity for ARIMA
+```{r,echo=TRUE,include=FALSE}
+check_stationarity <- function(ticker) {
+  test_result <- ticker %>% 
+    kpss.test()
+  if(test_result$p.value > 0.05){
+  print("stationary")
+  } else {
+    print("not Stationary")
+  }
+}
+
+tickers_xts <- list(AAPL, META, AMZN, IBM, MSFT, GOOGL, DELL, UBER, ADBE, HPQ)
+# tickers var is defined above
+stationarity <- c()  # Empty vector to store stationarity status
+
+for (ticker in tickers_xts) {
+  stationarity <- c(stationarity, check_stationarity(ticker = ticker))
+}
+```
+
+
+```{r}
+# Print the stationarity status for each ticker
+cat("Ticker | Stationarity\n")
+cat("--------------------\n")
+for (i in seq_along(tickers)) {
+  cat(as.character(tickers[i]), " | ", as.character(stationarity[i]), "\n")
+}
+
+```
+
+# Modelling
+
+High frequency or granularity, which is not supported by the ets() function used in the accuracy() function called within the RMSE_Calculator() function.
+
+The accuracy() function is used to calculate the accuracy measures of the forecast models. It relies on the ets() function from the forecast package, which is used to fit exponential smoothing models. However, ets() function cannot handle time series with high frequency or fine granularity.
+
+
+
+```{r}
+RMSE_Calculator <- function(tickers) {
+  train <- window(tickers,end = c(2022,43))
+  test <- window(tickers, start =c(2022,44))
+  
+  Avg_model <- train |>
+    meanf(h=nrow(test)) |>
+    accuracy(x=test)
+  
+  naive_model <- train |>
+    naive(h=nrow(test)) |>
+    accuracy(x=test)
+  
+  seasonal_naive_model <- train |>
+    snaive(h=nrow(test)) |>
+    accuracy(x=test)
+  
+  drift_model<-train |>
+    rwf(h=nrow(test),drift = T) |>
+    accuracy(x=test)
+  
+  ses_model <- train |>
+    ses(h=nrow(test)) |>
+    accuracy(x=test)
+  
+  holt_model <- train |>
+    holt(h=nrow(test)) |>
+    accuracy(x=test)
+  
+  holt_damped_model <- train |>
+    holt(h=nrow(test),damped = T) |>
+    accuracy(x=test)
+  
+  model_auto <- auto.arima(y = train,d = 1,D = 1,stepwise = F,approximation = F,lambda = BoxCox.lambda(train)) %>% 
+  forecast(h=nrow(test)) %>% 
+  accuracy(x = test)
+  
+  RMSE_train <- c(meanf = Avg_model[1,2],naive = naive_model[1,2],snaive=seasonal_naive_model[1,2],rwf =drift_model[1,2],ses =ses_model[1,2],holt = holt_model[1,2],holt_dampled = holt_damped_model[1,2],ARIMA = model_auto[1,2])
+  
+RMSE_test <-  c(meanf = Avg_model[2,2],naive = naive_model[2,2],snaive=seasonal_naive_model[2,2],rwf =drift_model[2,2],ses =ses_model[2,2],holt = holt_model[2,2],holt_dampled = holt_damped_model[2,2],ARIMA = model_auto[1,2])
+
+final_df <- data.frame(RMSE_train = RMSE_train,RMSE_test=RMSE_test,model = names(RMSE_train))
+
+final_df %>% 
+  arrange((RMSE_test))
+  
+}
+
+RMSE_Calculator(META)
+
+tickers_ts <- list(AAPL, META, AMZN, IBM, MSFT, GOOGL, DELL, UBER, ADBE, HPQ)
+
+# Apply the RMSE_Calculator function to each ticker in the list
+results <- lapply(tickers_ts, RMSE_Calculator)
+
+# use lapply to extract the first row of each data frame
+first_rows <- lapply(results, function(df) df[1, ])
+
+
+# combine the first rows into a single data frame
+result_df <- do.call(rbind, first_rows)
+
+# Add a new column with the ticker names
+result_df$ticker <- c("AAPL", "META", "AMZN", "IBM", "MSFT", "GOOGL", "DELL", "UBER", "ADBE", "HPQ")
+
+
+# view the result
+result_df
+
+```
+
+# Forecasts 
+
+```{r}
+forecast_models <- function(ticker){
+  train <- window(ticker,end = c(2022,43))
+  test <- window(ticker, start =c(2022,44))
+  
+  ticker_ARIMA <- auto.arima(y = train,d = 1,D = 1,stepwise = F,approximation = F,lambda = BoxCox.lambda(train)) %>% 
+  forecast(h=nrow(test))
+  
+  ticker_ARIMA
+  
+}
+
+AAPL_ARIMA <- forecast_models(AAPL)
+AAPL_ARIMA <- AAPL_ARIMA$mean
+
+META_ARIMA <- forecast_models(META)
+META_ARIMA <- META_ARIMA$mean
+
+AMZN_ARIMA <- forecast_models(AMZN)
+AMZN_ARIMA <- AMZN_ARIMA$mean
+
+IBM_ARIMA <- forecast_models(IBM)
+IBM_ARIMA <- IBM_ARIMA$mean
+
+MSFT_ARIMA <- forecast_models(MSFT)
+MSFT_ARIMA <- MSFT_ARIMA$mean
+
+GOOGL_ARIMA <- forecast_models(GOOGL)
+GOOGL_ARIMA <-GOOGL_ARIMA$mean
+
+DELL_ARIMA <- forecast_models(DELL)
+DELL_ARIMA <- DELL_ARIMA$mean
+
+ADBE_ARIMA <- forecast_models(ADBE)
+ADBE_ARIMA <- ADBE_ARIMA$mean
+
+HPQ_ARIMA <- forecast_models(HPQ)
+HPQ_ARIMA <- HPQ_ARIMA$mean
+
+
+train <- window(UBER,end = c(2022,43))
+test <- window(UBER, start =c(2022,44))
+
+drift_UBER <-train |>
+    rwf(h=nrow(test),drift = T)
+UBER_drift <- drift_UBER$mean
+
+
+
+```
+
+
+# dates
+
+```{r}
+start_date <- as.Date("2022-11-01")
+
+# Create a sequence of dates from start_date to today's date
+end_date <- Sys.Date()
+dates <- seq(from = start_date, to = end_date, by = "day")
+dates <- as.character(dates)
+```
+
+# Wallstreet
+
+```{r}
+getTextwsb <- function(dates,keywords){
+    stock_text <- find_thread_urls(keywords = keywords,sort_by = "new",subreddit = "wallstreetbets",period = "all")
+    stock_dates <- stock_text |> filter(date_utc %in% dates)
+    if(nrow(stock_dates) == 0) {
+    return (data.frame(comment = character(),
+                 score = integer(),
+                 upvotes = integer(),
+                 downvotes = integer(),
+                 golds = integer(),
+                 date = character(),
+                 stringsAsFactors = FALSE))
+  }
+    stock_dates <- get_thread_content(stock_dates$url)
+    stock_dates_threads <- stock_dates$threads
+    stock_dates_comments <- stock_dates$comments
+    stock_dates_threads <- stock_dates_threads[,c("title","text","score","upvotes","downvotes","golds","date")]
+    stock_dates_comments <- stock_dates_comments[,c("comment","score","upvotes","downvotes","golds","date")]
+    library(stringr)
+    stock_dates_threads$text <- str_c(stock_dates_threads$title,".",stock_dates_threads$text)
+    stock_dates_threads <- stock_dates_threads[,-1]
+    names(stock_dates_threads)[1] <- "comment"
+    stock <- rbind(stock_dates_threads,stock_dates_comments)
+    stock
+}
+
+
+Apple_text <- getTextwsb(dates,"Apple")
+Meta_text <- getTextwsb(dates,"META")
+adobe_text <- getTextwsb(dates,"adobe")
+Amazon_text <- getTextwsb(dates,"Amazon")
+IBM_text <- getTextwsb(dates,"IBM")
+Microsoft_text <-getTextwsb(dates,"Microsoft")
+Google_text <- getTextwsb(dates,"Google")
+Dell_text <- getTextwsb(dates,"Dell")
+HP_text <- getTextwsb(dates,"HP")
+Uber_text <-getTextwsb(dates,"Uber")
+
+
+add_company_name <- function(df, name) {
+  if (nrow(df) == 0) {
+    # if empty, create a new dataframe with column names
+    df <- data.frame(comment = NA,
+                     score = NA,
+                     upvotes = NA,
+                     downvotes = NA,
+                     golds = NA,
+                     date = NA,
+                     company_name = name,
+                     stringsAsFactors = FALSE)
+  } else {
+    # if not empty, add a new column with value "adobe"
+    df$company_name <- name
+  }
+  return(df)
+}
+
+
+adobe_text <- add_company_name(adobe_text, "Adobe")
+Apple_text <- add_company_name(Apple_text,"Apple")
+Meta_text <- add_company_name(Meta_text,"META")
+Amazon_text <- add_company_name(Amazon_text,"Amazon")
+IBM_text <- add_company_name(IBM_text,"IBM")
+Microsoft_text <-add_company_name(Microsoft_text,"Microsoft")
+Google_text <- add_company_name(Google_text,"Google")
+Dell_text <- add_company_name(Dell_text,"Dell")
+HP_text <- add_company_name(HP_text,"HP")
+Uber_text <-add_company_name(Uber_text,"Uber")
+
+WSB <- rbind(adobe_text,Apple_text,Meta_text,Amazon_text,IBM_text,Microsoft_text,Google_text,Dell_text,HP_text,Uber_text)
+
+# removing NA values
+WSB <- WSB[complete.cases(WSB),]
+
+class(WSB)
+
+# converting everything to utf-8 encoding
+convert_to_utf8 <- function(x) {
+  if (is.character(x)) {
+    return(iconv(x, from = "", to = "UTF-8"))
+  }
+  return(x)
+}
+WSB$comment <- lapply(WSB$comment, convert_to_utf8)
+```
+
+# cleaning the text data
+
+```{r}
+library(tm) #  text mining
+corpus = Corpus(VectorSource(WSB$comment))
+
+corpus2 <-  corpus |>
+    tm_map(removePunctuation) |> # inclues automatic cleaning functions
+    tm_map(content_transformer(tolower)) |> # content_transformer calls external functions
+    tm_map(content_transformer(FUN = function(x) gsub(pattern='http[[:alnum:][:punct:]]*',replacement=" ",x=x))) |>
+  tm_map(content_transformer(FUN = function(x) gsub(pattern='https[[:alnum:][:punct:]]*',replacement=" ",x=x))) |>
+    tm_map(removeWords,stopwords("english")) |> # removes all stopwords in english
+    tm_map(removeNumbers) |>
+    tm_map(stemDocument) |> #chop the last part of the document so that swim and swimming can come in the same braket
+    tm_map(stripWhitespace) %>% 
+    tm_map(content_transformer(FUN = function(x) gsub(pattern="[0-9]*|\\*",replacement="",x=x)))
+
+WSB$comment <-  corpus2$content
+
+
+
+```
+
+
+# afinn (How positive are the reviews)
+> The afinn lexicon scores each word based on the extent to which it is positive or negative.
+
+```{r}
+new_words <- list(
+  citron = -4.0,
+  hidenburg = -4.0,
+  moon = 4.0,
+  highs = 2.0,
+  mooning = 4.0,
+  long = 2.0,
+  short = -2.0,
+  call = 4.0,
+  calls = 4.0,
+  put = -4.0,
+  puts = -4.0,
+  `break` = 2.0,
+  tendie = 2.0,
+  tendies = 2.0,
+  town = 2.0,
+  overvalued = -3.0,
+  undervalued = 3.0,
+  buy = 4.0,
+  sell = -4.0,
+  gone = -1.0,
+  gtfo = -1.7,
+  paper = -1.7,
+  bullish = 3.7,
+  bearish = -3.7,
+  bagholder = -1.7,
+  stonk = 1.9,
+  green = 1.9,
+  money = 1.2,
+  print = 2.2,
+  rocket = 2.2,
+  bull = 2.9,
+  bear = -2.9,
+  pumping = -1.0,
+  sus = -3.0,
+  offering = -2.3,
+  rip = -4.0,
+  downgrade = -3.0,
+  upgrade = 3.0,
+  maintain = 1.0,
+  pump = 1.9,
+  hot = 1.5,
+  drop = -2.5,
+  rebound = 1.5,
+  crack = 2.5
+)
+
+new_words_df <- data.frame(
+  word = names(new_words),
+  value = as.numeric(new_words)
+)
+
+afinn = get_sentiments('afinn')
+
+afinn_open <- rbind(afinn,new_words_df)
+
+Sentiment_afinn <- WSB %>%
+  select(comment,company_name,date)%>%
+  unnest_tokens(output=word,input=comment)%>%
+  inner_join(afinn_open)%>%
+  group_by(company_name) %>% 
+  summarize(reviewSentiment = mean(value)) %>% 
+  arrange(desc(reviewSentiment))
+
+
+AAPL_returns <- ((AAPL_ARIMA[length(AAPL_ARIMA)] - AAPL_ARIMA[1]) / AAPL_ARIMA[1])*100
+META_returns <- ((META_ARIMA[length(META_ARIMA)] - META_ARIMA[1]) / META_ARIMA[1])*100
+ADBE_returns <- ((ADBE_ARIMA[length(ADBE_ARIMA)] - ADBE_ARIMA[1]) / ADBE_ARIMA[1])*100
+AMZN_returns <- ((AMZN_ARIMA[length(AMZN_ARIMA)] - AMZN_ARIMA[1]) / AMZN_ARIMA[1])*100
+DELL_returns <- ((DELL_ARIMA[length(DELL_ARIMA)] - DELL_ARIMA[1]) / DELL_ARIMA[1])*100
+GOOGL_returns <- ((GOOGL_ARIMA[length(GOOGL_ARIMA)] - GOOGL_ARIMA[1]) / GOOGL_ARIMA[1])*100
+HPQ_returns <- ((HPQ_ARIMA[length(HPQ_ARIMA)] - HPQ_ARIMA[1]) / HPQ_ARIMA[1])*100
+IBM_returns <- ((IBM_ARIMA[length(IBM_ARIMA)] - IBM_ARIMA[1]) / IBM_ARIMA[1])*100
+MSFT_returns <- ((MSFT_ARIMA[length(MSFT_ARIMA)] - MSFT_ARIMA[1]) / MSFT_ARIMA[1])*100
+UBER_returns <- ((UBER_drift[length(UBER_drift)] - UBER_drift[1]) / UBER_drift[1])*100
+
+returns_final <- c(Apple=AAPL_returns,META = META_returns,Adobe=ADBE_returns,Amazon=AMZN_returns,Dell=DELL_returns,Google =GOOGL_returns,HP=HPQ_returns,IBM=IBM_returns,Microsoft=MSFT_returns,Uber=UBER_returns)
+
+returns_df_final <-  data.frame(company_name = names(returns_final),returns = returns_final)
+
+
+Sentiment_score <- inner_join(x = returns_df_final,y = Sentiment_afinn,by="company_name")
+
+Sentiment_score %>% 
+  ggplot(aes(x=returns,y=reviewSentiment,color=company_name)) +
+  geom_point(size=4)+
+  labs(title="Afinn Sentiment Analysis with stock prices")
+
+Sentiment_score %>% 
+  ggplot(aes(x=returns,y=reviewSentiment,color=company_name,label = company_name)) +
+  geom_point(size=3) +
+  geom_text(nudge_y = -0.00499) +
+  labs(title="Afinn Sentiment Analysis with stock prices")
+
+
+```
+
+# Jocker 
+
+```{r}
+new_words <- list(
+  citron = -4.0,
+  hidenburg = -4.0,
+  moon = 4.0,
+  highs = 2.0,
+  mooning = 4.0,
+  long = 2.0,
+  short = -2.0,
+  call = 4.0,
+  calls = 4.0,
+  put = -4.0,
+  puts = -4.0,
+  `break` = 2.0,
+  tendie = 2.0,
+  tendies = 2.0,
+  town = 2.0,
+  overvalued = -3.0,
+  undervalued = 3.0,
+  buy = 4.0,
+  sell = -4.0,
+  gone = -1.0,
+  gtfo = -1.7,
+  paper = -1.7,
+  bullish = 3.7,
+  bearish = -3.7,
+  bagholder = -1.7,
+  stonk = 1.9,
+  green = 1.9,
+  money = 1.2,
+  print = 2.2,
+  rocket = 2.2,
+  bull = 2.9,
+  bear = -2.9,
+  pumping = -1.0,
+  sus = -3.0,
+  offering = -2.3,
+  rip = -4.0,
+  downgrade = -3.0,
+  upgrade = 3.0,
+  maintain = 1.0,
+  pump = 1.9,
+  hot = 1.5,
+  drop = -2.5,
+  rebound = 1.5,
+  crack = 2.5
+)
+
+rescale <- function(x, old_min = -4, old_max = 4, new_min = -1, new_max = 1) {
+  ((x - old_min) * (new_max - new_min)) / (old_max - old_min) + new_min
+}
+
+new_words_rescaled <- lapply(new_words, rescale)
+
+# Convert the rescaled list to a named vector
+new_words_rescaled_vector <- unlist(new_words_rescaled)
+
+# Create a data frame with the names and values
+new_words_df <- data.frame(
+  word = names(new_words_rescaled_vector),
+  value = as.numeric(new_words_rescaled_vector)
+)
+
+# Print the data frame
+emotions_scale <- rbind(new_words_df,key_sentiment_jockers)
+
+Sentiment_jocker <- WSB %>%
+  select(comment,company_name,date)%>%
+  unnest_tokens(output=word,input=comment)%>%
+  inner_join(emotions_scale)%>%
+  group_by(company_name) %>% 
+  summarize(reviewSentiment = mean(value)) %>% 
+  arrange(desc(reviewSentiment))
+
+Sentiment_score_jocker <- inner_join(x = returns_df_final,y = Sentiment_jocker,by="company_name")
+
+# Sentiment_score_jocker %>% 
+#   ggplot(aes(x=returns,y=reviewSentiment,color=company_name)) +
+#   geom_point(size=4) +
+#   labs(title="Jocker Sentiment Analysis with stock prices")
+
+Sentiment_score_jocker %>% 
+  ggplot(aes(x=returns,y=reviewSentiment,color=company_name,label = company_name)) +
+  geom_point(size=3) +
+  geom_text(nudge_y = -0.00199) +
+  labs(title="Jocker Sentiment Analysis with stock prices")
+
+
+```
+
+# put and Calls
+
+```{r}
+puts <- WSB %>%
+  group_by(company_name) %>%
+  summarise(count = str_count(tolower(comment), pattern = "puts|put")) %>% 
+  group_by(company_name) %>% 
+  summarise(count_puts = sum(count))
+
+calls <- WSB %>%
+  group_by(company_name) %>%
+  summarise(count = str_count(tolower(comment), pattern = "calls|call")) %>% 
+  group_by(company_name) %>% 
+  summarise(count_calls = sum(count))
+
+put_call_counts <- inner_join(x = puts,y = calls,by="company_name")
+
+put_call_counts$upside <- put_call_counts$count_calls - put_call_counts$count_puts 
+
+Sentiment_score_put_call <- inner_join(x = returns_df_final,y = put_call_counts,by="company_name")
+
+Sentiment_score_put_call %>% 
+  ggplot(aes(x=returns,y=upside,color=company_name,label = company_name)) +
+  geom_point(size=3) +
+  geom_text(nudge_y = -7) +
+  labs(title="Calls minus Puts Analysis with stock prices")
+
+```
+
+
+
