@@ -1,6 +1,6 @@
 # 🎯 **WallStreetBets Tech Waves: Sentiment Meets Stocks** 📈📉
 
-![Stock Market Sentiment](https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif)
+![Stock Market Sentiment](https://media.giphy.com/media/jMQ7plHMarEMqXrqtj/giphy.gif?cid=790b76110tja3c6hgmufvxg96jgwm7sfwnsdrt695l16ywdi&ep=v1_gifs_search&rid=giphy.gif&ct=g)
 
 ## 📌 **Project Overview**  
 This project **analyzes sentiment** from discussions in **r/WallStreetBets** 💬 to understand its **impact on stock prices** of **top tech companies**. Using **NLP, sentiment analysis, and time series forecasting**, we identify trends 📊 that could help traders **make better investment decisions**!  
