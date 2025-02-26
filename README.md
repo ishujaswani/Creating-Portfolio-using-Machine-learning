@@ -55,24 +55,6 @@ pip install yfinance
 
 ---
 
-## 🚀 How to Use
-
-### 1️⃣ Sentiment Analysis on Reddit Discussions
-```python
-python sentiment_analysis.py
-```
-
-### 2️⃣ Stock Price Forecasting
-```python
-python stock_forecasting.py
-```
-
-### 3️⃣ Visualize Results
-```python
-python visualize_results.py
-```
-
----
 
 ## 📊 Results & Insights
 ✔ **Most discussions were neutral** (balanced buyer-seller influence).  
