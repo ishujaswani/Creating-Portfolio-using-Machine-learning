@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WallStreetBets Tech Waves | Sentiment Meets Stocks</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Hero Section -->
+    <header class="hero">
+        <nav class="navbar">
+            <div class="container">
+                <div class="logo">
+                    <span class="logo-icon">📈</span>
+                    <span class="logo-text">WSB Tech Waves</span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#stocks">Stocks</a></li>
+                    <li><a href="#results">Results</a></li>
+                    <li><a href="https://github.com/ishujaswani/Creating-Portfolio-using-Machine-learning"
+                            target="_blank" class="btn-primary">View on GitHub</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="hero-content">
+            <div class="container">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        <span class="gradient-text">Sentiment Meets Stocks</span>
+                    </h1>
+                    <p class="hero-subtitle">Analyzing r/WallStreetBets discussions to predict tech stock movements
+                        using advanced NLP and time series forecasting</p>
+                    <div class="hero-buttons">
+                        <a href="#about" class="btn btn-large btn-primary">Explore Project</a>
+                        <a href="https://github.com/ishujaswani/Creating-Portfolio-using-Machine-learning"
+                            target="_blank" class="btn btn-large btn-secondary">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                            </svg>
+                            GitHub
+                        </a>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="chart-container">
+                        <div class="stock-card">
+                            <span class="stock-symbol">AAPL</span>
+                            <span class="stock-change positive">+2.4%</span>
+                        </div>
+                        <div class="stock-card">
+                            <span class="stock-symbol">META</span>
+                            <span class="stock-change positive">+1.8%</span>
+                        </div>
+                        <div class="stock-card">
+                            <span class="stock-symbol">MSFT</span>
+                            <span class="stock-change negative">-0.6%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about" class="section about-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">About the Project</h2>
+                <p class="section-description">Bridging social media sentiment with stock market predictions</p>
+            </div>
+            <div class="about-content">
+                <div class="about-card">
+                    <div class="card-icon">💬</div>
+                    <h3>Data Collection</h3>
+                    <p>Scraping real-time discussions from r/WallStreetBets using RedditExtractoR to capture retail
+                        investor sentiment</p>
+                </div>
+                <div class="about-card">
+                    <div class="card-icon">🧠</div>
+                    <h3>NLP Analysis</h3>
+                    <p>Custom finance lexicons with WSB-specific terms like "moon," "tendies," and "bullish" for
+                        accurate sentiment scoring</p>
+                </div>
+                <div class="about-card">
+                    <div class="card-icon">📊</div>
+                    <h3>Stock Prediction</h3>
+                    <p>ARIMA time series forecasting to predict stock price movements and correlate with sentiment
+                        trends</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Research Problem -->
+    <section class="section research-section">
+        <div class="container">
+            <div class="research-box">
+                <div class="research-icon">❓</div>
+                <h2>Research Problem</h2>
+                <p class="research-question">Does investor sentiment on WallStreetBets influence long-term stock prices?
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stocks Section -->
+    <section id="stocks" class="section stocks-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Tech Stocks Analyzed</h2>
+                <p class="section-description">10 leading technology companies under the microscope</p>
+            </div>
+            <div class="stocks-grid">
+                <div class="stock-item">
+                    <div class="stock-icon">🍏</div>
+                    <h3>Apple</h3>
+                    <span class="ticker">AAPL</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">📘</div>
+                    <h3>Meta</h3>
+                    <span class="ticker">META</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">📦</div>
+                    <h3>Amazon</h3>
+                    <span class="ticker">AMZN</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">🏛</div>
+                    <h3>IBM</h3>
+                    <span class="ticker">IBM</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">🏢</div>
+                    <h3>Microsoft</h3>
+                    <span class="ticker">MSFT</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">🔍</div>
+                    <h3>Google</h3>
+                    <span class="ticker">GOOG</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">🖥</div>
+                    <h3>Dell</h3>
+                    <span class="ticker">DELL</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">🖨</div>
+                    <h3>HP</h3>
+                    <span class="ticker">HPQ</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">🚖</div>
+                    <h3>Uber</h3>
+                    <span class="ticker">UBER</span>
+                </div>
+                <div class="stock-item">
+                    <div class="stock-icon">🎨</div>
+                    <h3>Adobe</h3>
+                    <span class="ticker">ADBE</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section features-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Key Features</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🎯 Sentiment Scoring</h3>
+                    <p>AFFIN & JOCKER lexicons enhanced with 45+ WSB-specific financial terms</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📈 Time Series Forecasting</h3>
+                    <p>ARIMA models with automatic parameter selection and Box-Cox transformation</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💹 Options Analysis</h3>
+                    <p>Tracking puts vs calls mentions to gauge market sentiment direction</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔄 Real-Time Data</h3>
+                    <p>Continuous scraping from Reddit and Yahoo Finance APIs</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results" class="section results-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Results & Insights</h2>
+            </div>
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-icon">✅</div>
+                    <h3>Neutral Sentiment Dominance</h3>
+                    <p>Most discussions showed balanced sentiment, indicating equal buyer-seller influence across the
+                        board</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">📊</div>
+                    <h3>Sentiment Correlation</h3>
+                    <p>Clear correlation observed between sentiment scores and stock price trends over time</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">🎯</div>
+                    <h3>ARIMA Superiority</h3>
+                    <p>ARIMA models outperformed other forecasting methods for 9 out of 10 stocks analyzed</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">🚀</div>
+                    <h3>Uber Exception</h3>
+                    <p>Drift model proved more accurate for UBER, suggesting different market dynamics</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="section tech-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Technology Stack</h2>
+            </div>
+            <div class="tech-grid">
+                <div class="tech-badge">R</div>
+                <div class="tech-badge">Python</div>
+                <div class="tech-badge">RedditExtractoR</div>
+                <div class="tech-badge">yfinance</div>
+                <div class="tech-badge">tidytext</div>
+                <div class="tech-badge">forecast</div>
+                <div class="tech-badge">ggplot2</div>
+                <div class="tech-badge">ARIMA</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Explore?</h2>
+                <p>Dive into the code, check out the analysis, or contribute to the project</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/ishujaswani/Creating-Portfolio-using-Machine-learning" target="_blank"
+                        class="btn btn-large btn-primary">View on GitHub</a>
+                    <a href="https://github.com/ishujaswani/Creating-Portfolio-using-Machine-learning/blob/main/Final%20Project%20Report.pdf"
+                        target="_blank" class="btn btn-large btn-secondary">Read Full Report</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <div class="logo">
+                        <span class="logo-icon">📈</span>
+                        <span class="logo-text">WSB Tech Waves</span>
+                    </div>
+                    <p>Sentiment analysis meets stock prediction</p>
+                </div>
+                <div class="footer-right">
+                    <a href="https://github.com/ishujaswani/Creating-Portfolio-using-Machine-learning" target="_blank"
+                        class="footer-link">GitHub</a>
+                    <a href="#about" class="footer-link">About</a>
+                    <a href="#features" class="footer-link">Features</a>
+                    <a href="#results" class="footer-link">Results</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 WallStreetBets Tech Waves. Licensed under MIT.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
